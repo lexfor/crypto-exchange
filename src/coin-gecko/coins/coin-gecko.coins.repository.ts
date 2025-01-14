@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { Coin, CoinsRepository } from '../../coins/coins.interface';
+import {
+  ICoin,
+  CoinsRepository,
+  ICoinWithPrice,
+} from '../../coins/coins.interface';
 import { lastValueFrom } from 'rxjs';
 import { AUTH_HEADER_NAME } from '../constants';
 import {
@@ -24,7 +28,7 @@ export class CoinGeckoCoinsRepository implements CoinsRepository {
     };
   }
 
-  async getAll() {
+  async getAll(): Promise<ICoin[]> {
     const res = await lastValueFrom(
       this.httpService.get<CoinGeckoCoin[], any>(
         `${this.config.coinGecko.baseUrl}/coins/list`,
@@ -36,18 +40,45 @@ export class CoinGeckoCoinsRepository implements CoinsRepository {
     return CoinGeckoCoinsRepository.transformToSimpleCoins(res.data);
   }
 
+  async getById(id: string): Promise<ICoinWithPrice> {
+    const res = await lastValueFrom(
+      this.httpService.get<CoinGeckoCoin, any>(
+        `${this.config.coinGecko.baseUrl}/coins/${id}`,
+        {
+          headers: this.formAuthHeaders(),
+        },
+      ),
+    );
+    return CoinGeckoCoinsRepository.transformToSimpleCoinsWithPrice([
+      res.data,
+    ]).pop();
+  }
+
   formAuthHeaders() {
     return {
       [AUTH_HEADER_NAME]: this.config.coinGecko.apiKey,
     };
   }
 
-  static transformToSimpleCoins(rawData: CoinGeckoCoin[]): Coin[] {
+  static transformToSimpleCoins(rawData: CoinGeckoCoin[]): ICoin[] {
     return rawData.map((coinGeckoCoin) => {
       const { symbol } = coinGeckoCoin;
       return {
         ...coinGeckoCoin,
         alias: symbol,
+      };
+    });
+  }
+
+  static transformToSimpleCoinsWithPrice(
+    rawData: CoinGeckoCoin[],
+  ): ICoinWithPrice[] {
+    return rawData.map((coinGeckoCoin) => {
+      const { symbol } = coinGeckoCoin;
+      return {
+        ...coinGeckoCoin,
+        alias: symbol,
+        price: coinGeckoCoin?.market_data?.current_price?.usd ?? null,
       };
     });
   }

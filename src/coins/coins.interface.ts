@@ -1,10 +1,14 @@
 export interface CoinsRepository {
-  getAll(): Promise<Coin[]>;
+  getAll(): Promise<ICoin[]>;
+  getById(id: string): Promise<ICoinWithPrice>;
 }
 
-export interface Coin {
+export interface ICoin {
   id: string;
   alias: string;
   name: string;
-  platforms?: object;
+}
+
+export interface ICoinWithPrice extends ICoin {
+  price: number;
 }

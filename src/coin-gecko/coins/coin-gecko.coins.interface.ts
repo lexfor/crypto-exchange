@@ -2,7 +2,11 @@ export interface CoinGeckoCoin {
   id: string;
   symbol: string;
   name: string;
-  platforms?: object;
+  market_data?: {
+    current_price: {
+      usd: number;
+    };
+  };
 }
 
 export interface CoinGeckoRepositoryConfig {
