@@ -11,7 +11,7 @@ export const typeormFactory: TypeOrmModuleAsyncOptions = {
       username: configService.get('TYPEORM_USERNAME'),
       password: configService.get('TYPEORM_PASSWORD'),
       database: configService.get('TYPEORM_DATABASE'),
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+      entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
       synchronize: true,
     };
   },

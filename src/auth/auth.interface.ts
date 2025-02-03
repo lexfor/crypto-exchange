@@ -4,6 +4,7 @@ export interface AuthServiceConfig {
   hash: {
     salt: number;
   };
+  jwtEmailVerification: JWTConfig;
 }
 
 export interface JWTConfig {

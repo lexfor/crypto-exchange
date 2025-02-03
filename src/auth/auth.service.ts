@@ -5,10 +5,18 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthServiceConfig } from './auth.interface';
 import { ConfigService } from '@nestjs/config';
-import { JWTTokens, SignInDto, SignUpDto, Token } from './auth.dto';
+import {
+  JWTTokens,
+  SendEmailVerificationDto,
+  SignInDto,
+  SignUpDto,
+  Token,
+} from './auth.dto';
 import { UsersService } from '../users/users.service';
 import { UsersEntity } from '../users/entities/users.entity';
 import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
+import { EMAIL_VERIFICATION_TITLE } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +27,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {
     this.config = {
       jwt: {
@@ -28,6 +37,12 @@ export class AuthService {
       jwtRefresh: {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
         expiresIn: Number(this.configService.get('JWT_REFRESH_EXPIRES_IN')),
+      },
+      jwtEmailVerification: {
+        secret: this.configService.get('JWT_EMAIL_VERIFICATION_SECRET'),
+        expiresIn: Number(
+          this.configService.get('JWT_EMAIL_VERIFICATION_EXPIRES_IN'),
+        ),
       },
       hash: {
         salt: Number(this.configService.get('HASH_SALT')),
@@ -43,7 +58,9 @@ export class AuthService {
   }: SignUpDto): Promise<AuthEntity> {
     const user = await this.usersService.create({ username, fullName });
     const hash = await this.hashPassword(password);
-    return await this.createAuth(email, hash, user);
+    const auth = await this.createAuth(email, hash, user);
+    await this.sendVerificationEmail({ userId: user.id, email, fullName });
+    return auth;
   }
 
   async login({ email, password }: SignInDto): Promise<AuthEntity | null> {
@@ -76,10 +93,8 @@ export class AuthService {
   }
 
   async generateJWTTokens(userId: string): Promise<JWTTokens> {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.generateToken(userId, Token.ACCESS),
-      this.generateToken(userId, Token.REFRESH),
-    ]);
+    const accessToken = this.generateToken(userId, Token.ACCESS),
+      refreshToken = this.generateToken(userId, Token.REFRESH);
 
     await this.setRefreshToken(userId, refreshToken);
 
@@ -99,9 +114,47 @@ export class AuthService {
     return this.authRepository.save(auth);
   }
 
-  private generateToken(userId: string, token: Token): Promise<string> {
-    const JWTConfig =
-      token === Token.ACCESS ? this.config.jwt : this.config.jwtRefresh;
-    return this.jwtService.signAsync({ userId }, JWTConfig);
+  async sendVerificationEmail({
+    userId,
+    email,
+    fullName,
+  }: SendEmailVerificationDto) {
+    const verificationToken = this.generateToken(
+      userId,
+      Token.EMAIL_VERIFICATION,
+    );
+
+    const url = this.formVerificationUrl(verificationToken);
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: EMAIL_VERIFICATION_TITLE,
+      template: './email-verification-templates/email-template',
+      context: {
+        url,
+        fullName,
+      },
+    });
+  }
+
+  private generateToken(userId: string, token: Token): string {
+    switch (token) {
+      case Token.ACCESS:
+        return this.jwtService.sign({ userId }, this.config.jwt);
+      case Token.REFRESH:
+        return this.jwtService.sign({ userId }, this.config.jwtRefresh);
+      case Token.EMAIL_VERIFICATION:
+        return this.jwtService.sign(
+          { userId },
+          this.config.jwtEmailVerification,
+        );
+    }
+  }
+
+  private formVerificationUrl(token: string): string {
+    const host = this.configService.get('HOST');
+    const port = this.configService.get('PORT');
+
+    return `${host}:${port}/auth/email/verify?token=${token}`;
   }
 }
