@@ -104,14 +104,17 @@ export class AuthService {
     };
   }
 
+  async verifyEmail(userId: string): Promise<void> {
+    await this.authRepository.update({ userId }, { isVerified: true });
+  }
+
   async setRefreshToken(userId: string, refreshToken: string) {
-    const auth = await this.authRepository.findOne({
-      where: { user: { id: userId } },
-    });
-
-    auth['refreshToken'] = refreshToken;
-
-    return this.authRepository.save(auth);
+    return await this.authRepository.update(
+      {
+        userId,
+      },
+      { refreshToken },
+    );
   }
 
   async sendVerificationEmail({

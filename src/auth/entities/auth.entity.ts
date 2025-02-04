@@ -30,7 +30,13 @@ export class AuthEntity {
   @Column({ nullable: true })
   refreshToken: string;
 
+  @Column({ default: false })
+  isVerified: boolean;
+
   @OneToOne(() => UsersEntity, (user) => user.auth)
-  @JoinColumn()
+  @JoinColumn({ name: 'userId' })
   user: UsersEntity;
+
+  @Column()
+  userId: string;
 }
