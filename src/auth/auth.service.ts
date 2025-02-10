@@ -17,6 +17,8 @@ import { UsersEntity } from '../users/entities/users.entity';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { EMAIL_VERIFICATION_TITLE } from './constants';
+import { Response } from 'express';
+import { join } from 'path';
 
 @Injectable()
 export class AuthService {
@@ -104,8 +106,13 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(userId: string): Promise<void> {
-    await this.authRepository.update({ userId }, { isVerified: true });
+  async verifyEmail(userId: string, response: Response): Promise<void> {
+    const [, user] = await Promise.all([
+      this.authRepository.update({ userId }, { isVerified: true }),
+      this.usersService.getById(userId),
+    ]);
+
+    this.renderEmailVerificationResponse(response, user.fullName);
   }
 
   async setRefreshToken(userId: string, refreshToken: string) {
@@ -159,5 +166,29 @@ export class AuthService {
     const port = this.configService.get('PORT');
 
     return `${host}:${port}/auth/email/verify?token=${token}`;
+  }
+
+  private renderEmailVerificationResponse(
+    response: Response,
+    fullName: string,
+  ) {
+    const host = this.configService.get('HOST');
+    const port = this.configService.get('PORT');
+
+    const url = `${host}:${port}/auth/sign-in`;
+
+    response.render(
+      join(
+        __dirname,
+        '..',
+        'templates',
+        'email-verification-response-templates',
+        'response.hbs',
+      ),
+      {
+        fullName,
+        url,
+      },
+    );
   }
 }

@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { JWTTokens, SignUpDto } from './auth.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -25,7 +26,10 @@ export class AuthController {
 
   @UseGuards(EmailVerificationJwtGuard)
   @Get('email/verify')
-  async verifyEmail(@UserId() userId: string): Promise<void> {
-    await this.authService.verifyEmail(userId);
+  async verifyEmail(
+    @UserId() userId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.authService.verifyEmail(userId, res);
   }
 }
