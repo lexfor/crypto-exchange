@@ -15,4 +15,8 @@ export class UsersService {
     const user = this.usersRepository.create(dto);
     return await this.usersRepository.save(user);
   }
+
+  async getById(id: string): Promise<UsersEntity> {
+    return this.usersRepository.findOneBy({ id });
+  }
 }

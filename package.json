@@ -1,6 +1,6 @@
 {
   "name": "my-nest-project",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "",
   "author": "",
   "private": true,
@@ -20,6 +20,7 @@
     "test:e2e": "jest --config test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.3",
     "@nestjs/config": "^4.0.0",
@@ -31,6 +32,8 @@
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
+    "handlebars": "^4.7.8",
+    "hbs": "^4.2.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -47,6 +50,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
+    "@types/nodemailer": "^6.4.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",
