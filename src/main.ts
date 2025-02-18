@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   const host = configService.get('HOST');
   const port = configService.get<number>('PORT');
+  app.use(cookieParser());
   await app.listen(port);
   console.log(`Application is running on: ${host}:${port}`);
 }

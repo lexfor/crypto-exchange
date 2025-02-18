@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthEntity } from './entities/auth.entity';
 import { Repository } from 'typeorm';
@@ -11,6 +11,7 @@ import {
   SignInDto,
   SignUpDto,
   Token,
+  TokenPayload,
 } from './auth.dto';
 import { UsersService } from '../users/users.service';
 import { UsersEntity } from '../users/entities/users.entity';
@@ -19,6 +20,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { EMAIL_VERIFICATION_TITLE } from './constants';
 import { Response } from 'express';
 import { join } from 'path';
+import { messages } from './messages';
 
 @Injectable()
 export class AuthService {
@@ -145,6 +147,33 @@ export class AuthService {
         fullName,
       },
     });
+  }
+
+  async getRefreshToken(userId: string): Promise<string | null> {
+    const auth = await this.authRepository.findOneBy({
+      userId,
+    });
+
+    return auth?.refreshToken ?? null;
+  }
+
+  async verifyRefreshToken(refreshToken: string): Promise<string> {
+    try {
+      const { userId } = this.jwtService.verify<TokenPayload>(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+      const { refreshToken: savedRefreshToken } =
+        await this.authRepository.findOneBy({ userId });
+
+      if (refreshToken !== savedRefreshToken) {
+        throw new Error();
+      }
+
+      return userId;
+    } catch (e) {
+      console.error(e);
+      throw new BadRequestException(messages.WRONG_REFRESH_TOKEN);
+    }
   }
 
   private generateToken(userId: string, token: Token): string {

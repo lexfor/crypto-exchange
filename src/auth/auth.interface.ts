@@ -11,3 +11,11 @@ export interface JWTConfig {
   secret: string;
   expiresIn: number;
 }
+
+export interface AuthControllerConfig {
+  cookie: {
+    refreshToken: {
+      expiresIn: number;
+    };
+  };
+}
