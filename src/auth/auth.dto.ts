@@ -27,3 +27,9 @@ export class SendEmailVerificationDto {
   email: string;
   fullName: string;
 }
+
+export class TokenResponse extends PickType(JWTTokens, ['accessToken']) {}
+
+export class TokenPayload {
+  userId: string;
+}
