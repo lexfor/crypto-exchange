@@ -13,6 +13,7 @@ import { UsersService } from '../../users/users.service';
 import { AuthCommonService } from '../common/auth-common.service';
 import { EmailVerificationServiceConfig } from './email-verification.interface';
 import { SignUpFinishedEventDto } from '../events/auth.events';
+import { TypeHelper } from '../../shared/helpers/type.helper';
 
 @Injectable()
 export class EmailVerificationService {
@@ -29,7 +30,9 @@ export class EmailVerificationService {
         port: this.configService.get('PORT'),
       },
       emailVerification: {
-        featureFlag: this.configService.get('EMAIL_VERIFICATION_FEATURE_FLAG'),
+        featureFlag: TypeHelper.booleanStringToString(
+          this.configService.get('EMAIL_VERIFICATION_FEATURE_FLAG'),
+        ),
       },
     };
   }
