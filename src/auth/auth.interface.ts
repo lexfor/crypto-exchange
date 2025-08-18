@@ -5,3 +5,12 @@ export interface AuthControllerConfig {
     };
   };
 }
+
+export interface AuthServiceConfig {
+  signUp: {
+    featureFlag: boolean;
+  };
+  signIn: {
+    featureFlag: boolean;
+  };
+}
